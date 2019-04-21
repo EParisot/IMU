@@ -7,11 +7,11 @@ Raspberry IMU datas visualiser
 
 ![](capture.bmp)
 
-requirements :
+##requirements :
 python3
 vpython(optional)
 
-installation :
+##installation :
 ```
 sudo apt-get update
 sudo apt-get install build-essential python-pip python-dev python-smbus
@@ -19,7 +19,7 @@ cd Adafruit_Python_GPIO
 sudo python3 setup.py install
 ```
 
-usage : 
+##usage : 
 ```
 python3 main.py [--v](vpython needed)
 ```
