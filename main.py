@@ -105,7 +105,7 @@ if __name__ == "__main__":
     stdscr.addstr(2, offset, gyro_yaw_str)
     stdscr.addstr(4, 0, heading_str)
     stdscr.addstr(4, offset, temp_str)
-    stdscr.addstr(6, offset, "[ Press 'q' to exit ]")
+    stdscr.addstr(6, 8, "[ Press 'q' to exit ]")
     
     last = time.time()
     processed_accel = [0, 0, 0]
