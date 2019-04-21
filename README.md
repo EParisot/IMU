@@ -1,7 +1,7 @@
 # IMU
 Raspberry IMU datas visualiser
 
-![](capture.png)
+![](capture.bmp)
 
 requirements :
 python2 or python3 (needed for vpython)
