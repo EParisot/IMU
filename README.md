@@ -1,4 +1,8 @@
-# IMU
+# IMU GY-85
+## acc : adxl345
+## gyro : itg3200
+## magneto : qmc5883L
+
 Raspberry IMU datas visualiser
 
 ![](capture.bmp)
