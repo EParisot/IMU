@@ -10,8 +10,7 @@ vpython(optional)
 installation :
 ```
 sudo apt-get update
-sudo apt-get install build-essential python-pip python-dev python-smbus git
-git clone https://github.com/adafruit/Adafruit_Python_GPIO.git
+sudo apt-get install build-essential python-pip python-dev python-smbus
 cd Adafruit_Python_GPIO
 sudo python3 setup.py install
 ```
