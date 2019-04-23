@@ -11,7 +11,7 @@ Raspberry IMU datas visualiser
 python3;
 vpython(optional)
 
-## activate OpenGL (optional, mandatory with vpython) :
+## RPi Raspbian : activate OpenGL (optional, mandatory with vpython) :
 https://eltechs.com/how-to-enable-opengl-on-raspberry-pi/
 
 ## Adafruit_Python_GPIO installation (mandatory) :
