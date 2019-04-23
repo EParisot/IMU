@@ -108,7 +108,7 @@ class QMC5883L(object):
 
     def _write_byte(self, registry, value):
         self.bus.write_byte_data(self.address, registry, value)
-        time.sleep(0.01)
+        #time.sleep(0.01) #Buggy
 
     def _read_byte(self, registry):
         return self.bus.read_byte_data(self.address, registry)

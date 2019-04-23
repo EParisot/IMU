@@ -11,6 +11,9 @@ Raspberry IMU datas visualiser
 python3
 vpython(optional)
 
+## activate OpenGL (optional, mandatory with vpython) :
+https://eltechs.com/how-to-enable-opengl-on-raspberry-pi/
+
 ## installation :
 ```
 sudo apt-get update
@@ -21,6 +24,6 @@ sudo python3 setup.py install
 
 ## usage : 
 ```
-python3 main.py [--v](vpython needed)
+python3 main.py [--v](vpython/OpenGL needed)
 ```
 

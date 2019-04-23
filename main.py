@@ -5,35 +5,18 @@ from GY_85 import GY85
 import time
 from math import *
 import sys
-
 import curses
 
-###############################################
-#Start Vpython:
+'''
+IMU Sensor placed Y in front, upside down
 
-if len(sys.argv) > 1 and sys.argv[1] == "--v":
-    from vpython import *
-    
-    scene = canvas(title = 'IMU Visualizer',\
-            x = 0, y = 0, width=400, height = 400,\
-            scale = vector(1.2, 1.2, 1.2), \
-            center = vector(0, 0, 0), \
-            forward = vector(1, 0, -0.8), \
-            up = vector(0, 0, 1), \
-            background = vector(0, 0, 0))
-    
-    mybox = box(length = 1, height = 0.2, width = 1,\
-                axis = vector(1, 0, 0), \
-                up = vector(0, 0, 1), \
-                color = color.green)
+'''
 
-    #my_arrow = arrow(pos = vector(0, 0, 0.2), axis= vector(1, 0, 0), \
-    #            shaftwidth = 0, color = color.red)
-    
-#################################################
+
+
 # Init Sensor:
 sensor = GY85()
-
+# Init tools:
 grad2rad = pi / 180.0
 rad2grad = 1 / grad2rad
 
@@ -48,8 +31,8 @@ def process_accel(accel, a_mem):
     filtered = [val * alpha + (a_mem[i] * (1.0 - alpha)) for i, val in enumerate(processed)]
     # Calc Roll and Pitch:
     rad2grad = 180.0 / pi
-    roll = (atan2(filtered[1], filtered[2])) * rad2grad
-    pitch = (atan2(-filtered[0], sqrt(filtered[1]**2 + filtered[2]**2))) * rad2grad
+    roll = (atan2(-filtered[1], filtered[2])) * rad2grad
+    pitch = (atan2(filtered[0], sqrt(filtered[1]**2 + filtered[2]**2))) * rad2grad
     return (filtered, [roll, pitch])
 
 def process_gyro(gyro, g_mem, deltat):
@@ -62,9 +45,9 @@ def process_gyro(gyro, g_mem, deltat):
     g_mem[2] += processed[2] * deltat
     return (processed, g_mem)
     
-def update_box(vect):
-    roll = vect[0] * grad2rad
-    pitch = vect[1] * grad2rad
+def update_box(vect, mybox):
+    pitch = -vect[0] * grad2rad
+    roll = vect[1] * grad2rad
     yaw = -vect[2] * grad2rad
     # Convert (roll, pitch, yaw) to (axis, up)
     axis=vector(cos(pitch)*cos(yaw), \
@@ -76,45 +59,62 @@ def update_box(vect):
     #update box pos
     mybox.axis = axis
     mybox.up = up
-
-def update_arrow(vect):
-    my_arrow.axis = vector(vect[0], vect[1], 0)
     
     
 if __name__ == "__main__":
-    acc_x_str = "Acc_X : "
-    acc_y_str = "Acc_Y : "
-    acc_z_str = "Acc_Z : "
-    gyro_roll_str = "Roll : "
-    gyro_pitch_str = "Pitch : "
-    gyro_yaw_str = "Yaw : "
-    temp_str = "Temperature (°C) : "
-    heading_str = "Heading : "
     
-    stdscr = curses.initscr()
-    curses.noecho()
-    stdscr.nodelay(True)
+    if len(sys.argv) == 1 or "--v" not in sys.argv:
+        # Init curses window
+        acc_x_str = "Acc_X : "
+        acc_y_str = "Acc_Y : "
+        acc_z_str = "Acc_Z : "
+        gyro_roll_str = "Roll : "
+        gyro_pitch_str = "Pitch : "
+        gyro_yaw_str = "Yaw : "
+        temp_str = "Temperature (°C) : "
+        heading_str = "Heading : "
+        
+        stdscr = curses.initscr()
+        curses.noecho()
+        stdscr.nodelay(True)
 
-    offset = 32
+        offset = 32
+        
+        stdscr.addstr(0, 0, acc_x_str)
+        stdscr.addstr(1, 0, acc_y_str)
+        stdscr.addstr(2, 0, acc_z_str)
+        stdscr.addstr(0, offset, gyro_pitch_str)
+        stdscr.addstr(1, offset, gyro_roll_str)
+        stdscr.addstr(2, offset, gyro_yaw_str)
+        stdscr.addstr(4, 0, heading_str)
+        stdscr.addstr(4, offset, temp_str)
+        stdscr.addstr(6, 8, "[ Press 'q' to exit ]")
+        
+    else:
+        # Init vpython window
+        from vpython import *
     
-    stdscr.addstr(0, 0, acc_x_str)
-    stdscr.addstr(1, 0, acc_y_str)
-    stdscr.addstr(2, 0, acc_z_str)
-    stdscr.addstr(0, offset, gyro_roll_str)
-    stdscr.addstr(1, offset, gyro_pitch_str)
-    stdscr.addstr(2, offset, gyro_yaw_str)
-    stdscr.addstr(4, 0, heading_str)
-    stdscr.addstr(4, offset, temp_str)
-    stdscr.addstr(6, 8, "[ Press 'q' to exit ]")
+        scene = canvas(title = 'IMU Visualizer',\
+                x = 0, y = 0, width=400, height = 400,\
+                scale = vector(1.2, 1.2, 1.2), \
+                center = vector(0, 0, 0), \
+                forward = vector(1, 0, 0), \
+                up = vector(0, 0, 1), \
+                background = vector(0, 0, 0))
+        
+        my_box = box(length = 1, height = 0.2, width = 1,\
+                    axis = vector(1, 0, 0), \
+                    up = vector(0, 0, 1), \
+                    color = color.green)
     
     last = time.time()
     processed_accel = [0, 0, 0]
     g_vect = [0, 0, 0]
 
     while True:
-        
         # Grab datas:
         data = sensor.read()
+        additional_data = sensor.magneto_read()
         deltat = time.time() - last
         last = time.time()
         
@@ -126,31 +126,28 @@ if __name__ == "__main__":
         ratio = 0.98
         g_vect[0] = ratio * (g_vect[0]) + (1 - ratio) * a_vect[0]
         g_vect[1] = ratio * (g_vect[1]) + (1 - ratio) * a_vect[1]
-        #g_vect[2] = 0
         
         #update box or print datas:
         if len(sys.argv) > 1 and "--v" in sys.argv:
-            update_box(g_vect)
-            #update_arrow(g_vect)
+            update_box(g_vect, my_box)
+            
+        else:
+            stdscr.addstr(0, len(acc_x_str), str(round(processed_accel[0], 2)) + "  ")
+            stdscr.addstr(1, len(acc_y_str), str(round(processed_accel[1], 2)) + "  ")
+            stdscr.addstr(2, len(acc_z_str), str(round(processed_accel[2], 2)) + "  ")
 
-        stdscr.addstr(0, len(acc_x_str), str(round(processed_accel[0], 2)) + "  ")
-        stdscr.addstr(1, len(acc_y_str), str(round(processed_accel[1], 2)) + "  ")
-        stdscr.addstr(2, len(acc_z_str), str(round(processed_accel[2], 2)) + "  ")
+            stdscr.addstr(0, offset + len(gyro_pitch_str), str(round(-g_vect[0], 2)) + "  ")
+            stdscr.addstr(1, offset + len(gyro_roll_str), str(round(g_vect[1], 2)) + "  ")
+            stdscr.addstr(2, offset + len(gyro_yaw_str), str(round(-g_vect[2], 2)) + "  ")
+            
+            stdscr.addstr(4, len(heading_str), str(round(data[2], 2)) + "  ")
+            stdscr.addstr(4, offset + len(temp_str), str(round(additional_data[1], 2)) + "  ")
 
-        stdscr.addstr(0, offset + len(gyro_roll_str), str(round(g_vect[0], 2)) + "  ")
-        stdscr.addstr(1, offset + len(gyro_pitch_str), str(round(g_vect[1], 2)) + "  ")
-        stdscr.addstr(2, offset + len(gyro_yaw_str), str(round(g_vect[2], 2)) + "  ")
-
-        additional_data = sensor.magneto_read()
-        
-        stdscr.addstr(4, len(heading_str), str(round(data[2], 2)) + "  ")
-        stdscr.addstr(4, offset + len(temp_str), str(round(additional_data[1], 2)) + "  ")
-      
+            c = stdscr.getch()
+            if c == ord('q'):
+                curses.endwin()
+                break  # Exit the while loop
+            
         time.sleep(0.05)
-        
-        c = stdscr.getch()
-        if c == ord('q'):
-            break  # Exit the while loop
-        
-    curses.endwin()
-    exit()
+    
+    exit(0)
