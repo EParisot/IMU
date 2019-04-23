@@ -1,9 +1,9 @@
 # IMU GY-85
+Raspberry IMU datas visualiser
+
 	acc : adxl345
 	gyro : itg3200
 	magneto : qmc5883L
-
-Raspberry IMU datas visualiser
 
 ![](capture.bmp)
 
