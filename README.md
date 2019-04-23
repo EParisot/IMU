@@ -8,13 +8,13 @@ Raspberry IMU datas visualiser
 ![](capture.bmp)
 
 ## requirements :
-python3
+python3;
 vpython(optional)
 
 ## activate OpenGL (optional, mandatory with vpython) :
 https://eltechs.com/how-to-enable-opengl-on-raspberry-pi/
 
-## installation :
+## Adafruit_Python_GPIO installation (mandatory) :
 ```
 sudo apt-get update
 sudo apt-get install build-essential python-pip python-dev python-smbus
