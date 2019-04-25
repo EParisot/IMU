@@ -8,7 +8,7 @@ import sys
 import curses
 
 '''
-IMU Sensor placed Y in front, upside down
+IMU Sensor placed Y in front
 
 '''
 
@@ -46,9 +46,9 @@ def process_gyro(gyro, g_mem, deltat):
     return (processed, g_mem)
     
 def update_box(vect, mybox):
-    pitch = -vect[0] * grad2rad
+    pitch = vect[0] * grad2rad
     roll = vect[1] * grad2rad
-    yaw = -vect[2] * grad2rad
+    yaw = vect[2] * grad2rad
     # Convert (roll, pitch, yaw) to (axis, up)
     axis=vector(cos(pitch)*cos(yaw), \
                 -cos(pitch)*sin(yaw), \
@@ -122,10 +122,11 @@ if __name__ == "__main__":
         processed_accel, a_vect = process_accel(data[1], processed_accel)
         processed_gyro, g_vect = process_gyro(data[0], a_vect + [0], deltat)
         
-        # Combine datas:
+        # Combine datas and adjust signs:
         ratio = 0.98
-        g_vect[0] = ratio * (g_vect[0]) + (1 - ratio) * a_vect[0]
+        g_vect[0] = -1 * (ratio * (g_vect[0]) + (1 - ratio) * a_vect[0])
         g_vect[1] = ratio * (g_vect[1]) + (1 - ratio) * a_vect[1]
+        g_vect[2] = -1 * g_vect[2]
         
         #update box or print datas:
         if len(sys.argv) > 1 and "--v" in sys.argv:
@@ -136,9 +137,9 @@ if __name__ == "__main__":
             stdscr.addstr(1, len(acc_y_str), str(round(processed_accel[1], 2)) + "  ")
             stdscr.addstr(2, len(acc_z_str), str(round(processed_accel[2], 2)) + "  ")
 
-            stdscr.addstr(0, offset + len(gyro_pitch_str), str(round(-g_vect[0], 2)) + "  ")
+            stdscr.addstr(0, offset + len(gyro_pitch_str), str(round(g_vect[0], 2)) + "  ")
             stdscr.addstr(1, offset + len(gyro_roll_str), str(round(g_vect[1], 2)) + "  ")
-            stdscr.addstr(2, offset + len(gyro_yaw_str), str(round(-g_vect[2], 2)) + "  ")
+            stdscr.addstr(2, offset + len(gyro_yaw_str), str(round(g_vect[2], 2)) + "  ")
             
             stdscr.addstr(4, len(heading_str), str(round(data[2], 2)) + "  ")
             stdscr.addstr(4, offset + len(temp_str), str(round(additional_data[1], 2)) + "  ")
