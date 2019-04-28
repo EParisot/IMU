@@ -14,7 +14,7 @@ class GY85(object):
         self.magneto.set_declination(0.58)                           #Paris declination
     
     def read(self):
-        return ((self.gyro.read_data()), (self.accel.read_data()), self.magneto.get_bearing())
+        return ((self.accel.read_data()), (self.gyro.read_data()))
     
     def magneto_read(self):
-        return((self.magneto.get_magnet()), self.magneto.get_temp())
+        return((self.magneto.get_magnet()), self.magneto.get_temp(), self.magneto.get_bearing())

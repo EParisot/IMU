@@ -6,6 +6,7 @@ from math import *
 import sys
 import curses
 from vpython import *
+import csv
 
 '''
 IMU Sensor placed Y in front
@@ -69,14 +70,14 @@ def init_curses():
     stdscr.addstr(6, 8, str_dict["exit_str"])
     return (stdscr, str_dict, offset)
 
-def update_curses(stdscr, str_dict, offset, processed_accel, g_vect, data, additional_data):
+def update_curses(stdscr, str_dict, offset, processed_accel, g_vect, additional_data):
     stdscr.addstr(0, len(str_dict["acc_x_str"]), str(round(processed_accel[0], 2)) + "  ")
     stdscr.addstr(1, len(str_dict["acc_y_str"]), str(round(processed_accel[1], 2)) + "  ")
     stdscr.addstr(2, len(str_dict["acc_z_str"]), str(round(processed_accel[2], 2)) + "  ")
     stdscr.addstr(0, offset + len(str_dict["gyro_pitch_str"]), str(round(g_vect[0], 2)) + "  ")
     stdscr.addstr(1, offset + len(str_dict["gyro_roll_str"]), str(round(g_vect[1], 2)) + "  ")
     stdscr.addstr(2, offset + len(str_dict["gyro_yaw_str"]), str(round(g_vect[2], 2)) + "  ")
-    stdscr.addstr(4, len(str_dict["heading_str"]), str(round(data[2], 2)) + "  ")
+    stdscr.addstr(4, len(str_dict["heading_str"]), str(round(additional_data[2], 2)) + "  ")
     stdscr.addstr(4, offset + len(str_dict["temp_str"]), str(round(additional_data[1], 2)) + "  ")
     c = stdscr.getch()
     if c == ord('q'):
@@ -115,38 +116,87 @@ def update_vpython(vect, mybox):
     mybox.up = up
     
 if __name__ == "__main__":
-    # Init interface
-    if len(sys.argv) == 1 or "--v" not in sys.argv:
+    # Parse args
+    for i, arg in enumerate(sys.argv):
+        if arg == "--o":
+            if len(sys.argv) > i:
+                output_file = sys.argv[i + 1]
+                # Write first line
+                with open(output_file, mode="w") as f:
+                    writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                    writer.writerow(["AccX",
+                                     "AccY",
+                                     "AccZ",
+                                     "GyroX",
+                                     "GyroY",
+                                     "GyroZ"])
+        if arg == "--r":
+            if len(sys.argv) > i:
+                input_file = sys.argv[i + 1]
+                file_data = []
+                # read file
+                with open(input_file, mode='r') as f:
+                    reader = csv.reader(f, delimiter=',')
+                    line_count = 0
+                    for line in reader:
+                        if line_count > 0:
+                            # cast to float
+                            for i, elem in enumerate(line):
+                                line[i] = float(elem)
+                            file_data.append(((line[0], line[1], line[2]),
+                                             (line[3], line[4], line[5])))
+                        line_count += 1
+                line_count = 0
+        if arg == "--v":
+            # Init vpython window
+            my_box = init_vpython()
+    if "--v" not in sys.argv:
         # Init curses window
         stdscr, str_dict, offset = init_curses()
-    else:
-        # Init vpython window
-        my_box = init_vpython()
+        
     # Start
     last = time.time()
     processed_accel = [0, 0, 0]
     g_vect = [0, 0, 0]
+
     while True:
         # Grab datas:
-        data = sensor.read()
+        if "--r" in sys.argv:
+            if line_count < len(file_data):
+                data = file_data[line_count]
+            else:
+                break
+            line_count += 1
+        else:
+            data = sensor.read()
         additional_data = sensor.magneto_read()
         deltat = time.time() - last
         last = time.time()
         # Process datas:
-        processed_accel, a_vect = process_accel(data[1], processed_accel)
-        processed_gyro, g_vect = process_gyro(data[0], a_vect + [0], deltat)
+        processed_accel, a_vect = process_accel(data[0], processed_accel)
+        processed_gyro, g_vect = process_gyro(data[1], a_vect + [0], deltat)
         # Combine datas and adjust signs:
         ratio = 0.98
         g_vect[0] = -1 * (ratio * (g_vect[0]) + (1 - ratio) * a_vect[0])
         g_vect[1] = ratio * (g_vect[1]) + (1 - ratio) * a_vect[1]
         g_vect[2] = -1 * g_vect[2]
-        #update box or print datas:
-        if len(sys.argv) > 1 and "--v" in sys.argv:
+        # Save data
+        if "--o" in sys.argv:
+            with open(output_file, mode="a") as f:
+                writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                writer.writerow([str(processed_accel[0]),
+                                 str(processed_accel[1]),
+                                 str(processed_accel[2]),
+                                 str(processed_gyro[0]),
+                                 str(processed_gyro[1]),
+                                 str(processed_gyro[2])])
+        # Update box or print datas:
+        if "--v" in sys.argv:
             update_vpython(g_vect, my_box)
         else:
             if update_curses(stdscr, str_dict, offset, 
                             processed_accel, g_vect,
-                            data, additional_data):
+                            additional_data):
                 break
-        time.sleep(0.05)
+        time.sleep(0.01)
     exit(0)
