@@ -24,6 +24,12 @@ sudo python3 setup.py install
 
 ## usage : 
 ```
-python3 main.py [--v](vpython/OpenGL needed)
+python3 main.py [--v](vpython/OpenGL needed) [--r file.csv] [--o file.csv]
+
+--v : vpython 3d box visualisation
+--r : read csv file
+--o : write csv file
+
+file row format : "AccX", "AccY", "AccZ", "GyroX", "GyroY", "GyroZ" 
 ```
 
