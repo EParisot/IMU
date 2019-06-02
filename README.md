@@ -16,10 +16,10 @@ vpython(optional)
 ```
 
 ## RPi Raspbian : activate I2C interface (mandatory)
-'''
+```
 sudo raspi-config
 	-> interfaces = activate I2C
-'''
+```
 
 ## RPi Raspbian : activate OpenGL (optional, mandatory with vpython) :
 https://eltechs.com/how-to-enable-opengl-on-raspberry-pi/
@@ -35,7 +35,7 @@ file row format : "AccX", "AccY", "AccZ", "GyroX", "GyroY", "GyroZ"
 ```
 
 ## Thread Class usage
-'''
+```
 import GY-85
 import IMU
 import time
@@ -45,6 +45,6 @@ imu.start()
 time.sleep(0.5)
 while True:
 	print(imu.values)
-\# Will print eternaly until "imu.stop = True"
-'''
+# Will print eternaly until "imu.stop = True"
+```
 
