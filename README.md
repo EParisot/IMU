@@ -42,6 +42,7 @@ import time
 
 imu = IMU(GY-85())
 imu.start()
+# let the thread start
 time.sleep(0.5)
 while True:
 	print(imu.values)
