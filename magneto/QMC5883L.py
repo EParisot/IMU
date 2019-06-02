@@ -168,13 +168,12 @@ class QMC5883L(object):
         """Return the magnetic sensor vector with calibration applied."""
         [x, y, z] = self.get_magnet_raw()
         if x is None or y is None or z is None:
-            [x1, y1, z1] = [x, y, z]
+            [x1, y1] = [x, y]
         else:
             c = self._calibration
-            x1 = x * c[0][0] + y * c[0][1] + z * c[0][2]
-            y1 = x * c[1][0] + y * c[1][1] + z * c[1][2]
-            z1 = x * c[2][0] + y * c[2][1] + z * c[2][2]
-        return [x1, y1, z1]
+            x1 = x * c[0][0] + y * c[0][1] + c[0][2]
+            y1 = x * c[1][0] + y * c[1][1] + c[1][2]
+        return [x1, y1]
 
     def get_bearing_raw(self):
         """Horizontal bearing (in degrees) from magnetic value X and Y."""
@@ -189,7 +188,7 @@ class QMC5883L(object):
 
     def get_bearing(self):
         """Horizontal bearing, adjusted by calibration and declination."""
-        [x, y, z] = self.get_magnet()
+        [x, y] = self.get_magnet()
         if x is None or y is None:
             return None
         else:
