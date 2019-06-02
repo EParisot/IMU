@@ -45,6 +45,6 @@ imu.start()
 time.sleep(0.5)
 while True:
 	print(imu.values)
-# Will print eternaly until "imu.stop = True"
+\# Will print eternaly until "imu.stop = True"
 '''
 
