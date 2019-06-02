@@ -129,7 +129,8 @@ if __name__ == "__main__":
                                      "AccZ",
                                      "GyroX",
                                      "GyroY",
-                                     "GyroZ"])
+                                     "GyroZ",
+                                     "Heading"])
         if arg == "--r":
             if len(sys.argv) > i:
                 input_file = sys.argv[i + 1]
@@ -165,6 +166,8 @@ if __name__ == "__main__":
             if line_count < len(file_data):
                 data = file_data[line_count]
             else:
+                if "--v" not in sys.argv:
+                    curses.endwin()
                 break
             line_count += 1
         else:
@@ -184,12 +187,13 @@ if __name__ == "__main__":
         if "--o" in sys.argv:
             with open(output_file, mode="a") as f:
                 writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                writer.writerow([str(processed_accel[0]),
-                                 str(processed_accel[1]),
-                                 str(processed_accel[2]),
-                                 str(processed_gyro[0]),
-                                 str(processed_gyro[1]),
-                                 str(processed_gyro[2])])
+                writer.writerow([str(round(processed_accel[0], 2)),
+                                 str(round(processed_accel[1], 2)),
+                                 str(round(processed_accel[2], 2)),
+                                 str(round(processed_gyro[0], 2)),
+                                 str(round(processed_gyro[1], 2)),
+                                 str(round(processed_gyro[2], 2)),
+                                 str(round(additional_data[2], 2))])
         # Update box or print datas:
         if "--v" in sys.argv:
             update_vpython(g_vect, my_box)
