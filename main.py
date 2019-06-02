@@ -162,7 +162,12 @@ class IMU(Thread):
     def __init__(self, sensor):
         Thread.__init__(self)
         self.sensor = sensor
-        self.values = None
+        self.values = {"deltat": 0,
+                       "acc": [0, 0, 0],
+                       "gyro": [0, 0, 0],
+                       "temp": 0,
+                       "heading": 0}
+
         self.stop = False
 
     def run(self):
@@ -225,12 +230,12 @@ if __name__ == "__main__":
         if "--o" in sys.argv:
             write_out_file(output_file, deltat, processed_accel, temp, heading)
         # Update box or print datas:
-        if "--v" in sys.argv:
-            update_vpython(g_vect, my_box)
         if update_curses(stdscr, str_dict, offset, 
                             processed_accel, g_vect,
                             temp, heading):
-            imu.stop = True
-            break  
+            break
+        if "--v" in sys.argv:
+            update_vpython(g_vect, my_box)
         time.sleep(0.1)
+    imu.stop = True
     exit(0)
