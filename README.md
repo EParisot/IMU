@@ -33,8 +33,6 @@ python3 main.py [--v](vpython/OpenGL needed) [--r file.csv] [--o file.csv]
 
 --v : vpython 3d box visualisation
 --o : output data to csv file
-
-file row format : "AccX", "AccY", "AccZ", "GyroX", "GyroY", "GyroZ" 
 ```
 
 ## Thread Class usage
