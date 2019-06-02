@@ -7,7 +7,6 @@ import sys
 import curses
 from vpython import *
 import csv
-
 from threading import Thread
 
 '''
@@ -214,11 +213,10 @@ if __name__ == "__main__":
             my_box = init_vpython()
     # Init curses window
     stdscr, str_dict, offset = init_curses()
-
+    # Init IMU object and start Thread
     imu = IMU(sensor)
     imu.start()
     time.sleep(0.2)
-    
     while True:
         imu_values = imu.values
         deltat = imu_values["deltat"]
