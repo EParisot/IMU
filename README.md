@@ -22,7 +22,10 @@ sudo raspi-config
 ```
 
 ## RPi Raspbian : activate OpenGL (optional, mandatory with vpython) :
-https://eltechs.com/how-to-enable-opengl-on-raspberry-pi/
+```
+sudo raspi-config
+	-> Advanced Options -> GL Driver = Full KMS
+```
 
 ## Script usage : 
 ```
