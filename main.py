@@ -8,6 +8,8 @@ import curses
 from vpython import *
 import csv
 
+from threading import Thread
+
 '''
 IMU Sensor placed Y in front
 
@@ -70,15 +72,15 @@ def init_curses():
     stdscr.addstr(6, 8, str_dict["exit_str"])
     return (stdscr, str_dict, offset)
 
-def update_curses(stdscr, str_dict, offset, processed_accel, g_vect, additional_data):
+def update_curses(stdscr, str_dict, offset, processed_accel, g_vect, temp, heading):
     stdscr.addstr(0, len(str_dict["acc_x_str"]), str(round(processed_accel[0], 2)) + "  ")
     stdscr.addstr(1, len(str_dict["acc_y_str"]), str(round(processed_accel[1], 2)) + "  ")
     stdscr.addstr(2, len(str_dict["acc_z_str"]), str(round(processed_accel[2], 2)) + "  ")
     stdscr.addstr(0, offset + len(str_dict["gyro_pitch_str"]), str(round(g_vect[0], 2)) + "  ")
     stdscr.addstr(1, offset + len(str_dict["gyro_roll_str"]), str(round(g_vect[1], 2)) + "  ")
     stdscr.addstr(2, offset + len(str_dict["gyro_yaw_str"]), str(round(g_vect[2], 2)) + "  ")
-    stdscr.addstr(4, len(str_dict["heading_str"]), str(round(additional_data[2], 2)) + "  ")
-    stdscr.addstr(4, offset + len(str_dict["temp_str"]), str(round(additional_data[1], 2)) + "  ")
+    stdscr.addstr(4, len(str_dict["heading_str"]), str(round(heading, 2)) + "  ")
+    stdscr.addstr(4, offset + len(str_dict["temp_str"]), str(round(temp, 2)) + "  ")
     c = stdscr.getch()
     if c == ord('q'):
         curses.endwin()
@@ -114,93 +116,121 @@ def update_vpython(vect, mybox):
     #update box pos
     mybox.axis = axis
     mybox.up = up
+
+def init_out_file(output_file):
+    with open(output_file, mode="w") as f:
+                    writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                    writer.writerow(["deltaT",
+                                     "AccX",
+                                     "AccY",
+                                     "AccZ",
+                                     "GyroX",
+                                     "GyroY",
+                                     "GyroZ",
+                                     "Temp",
+                                     "Heading"])
+                    
+def write_out_file(output_file, deltat, processed_accel, temp, heading):
+    with open(output_file, mode="a") as f:
+                writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                writer.writerow([str(round(deltat, 2)),
+                                 str(round(processed_accel[0], 2)),
+                                 str(round(processed_accel[1], 2)),
+                                 str(round(processed_accel[2], 2)),
+                                 str(round(processed_gyro[0], 2)),
+                                 str(round(processed_gyro[1], 2)),
+                                 str(round(processed_gyro[2], 2)),
+                                 str(round(temp, 2)),
+                                 str(round(heading, 2))])
+
+class IMU(Thread):
+    '''
+    Threaded IMU class
     
+    usage:
+            ###########################
+            imu = IMU(sensor)
+            imu.start()
+            time.sleep(0.2)
+            try:
+                while True:
+                    print(imu.values)
+            except:
+                imu.stop = True
+            ###########################
+    '''
+    def __init__(self, sensor):
+        Thread.__init__(self)
+        self.sensor = sensor
+        self.values = None
+        self.stop = False
+
+    def run(self):
+        last = time.time()
+        processed_accel = [0, 0, 0]
+        g_vect = [0, 0, 0]
+        while self.stop == False:
+            # Grab datas:
+            data = self.sensor.read()
+            additional_data = self.sensor.magneto_read()
+            deltat = time.time() - last
+            last = time.time()
+            # Process datas:
+            processed_accel, a_vect = process_accel(data[0], processed_accel)
+            processed_gyro, g_vect = process_gyro(data[1], a_vect + [0], deltat)
+            # Combine datas and adjust signs:
+            ratio = 0.98
+            g_vect[0] = -1 * (ratio * (g_vect[0]) + (1 - ratio) * a_vect[0])
+            g_vect[1] = ratio * (g_vect[1]) + (1 - ratio) * a_vect[1]
+            g_vect[2] = -1 * g_vect[2]
+            # return
+            self.values = {"deltat": deltat,
+                   "acc": processed_accel,
+                   "gyro": g_vect,
+                   "temp": round(additional_data[1], 2),
+                   "heading": round(additional_data[2], 2)}
+
 if __name__ == "__main__":
+    '''
+    Script
+    usage:
+    
+    python3 IMU.py [--v] [--o file]
+    '''
     # Parse args
     for i, arg in enumerate(sys.argv):
         if arg == "--o":
             if len(sys.argv) > i:
                 output_file = sys.argv[i + 1]
                 # Write first line
-                with open(output_file, mode="w") as f:
-                    writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                    writer.writerow(["AccX",
-                                     "AccY",
-                                     "AccZ",
-                                     "GyroX",
-                                     "GyroY",
-                                     "GyroZ",
-                                     "Heading"])
-        if arg == "--r":
-            if len(sys.argv) > i:
-                input_file = sys.argv[i + 1]
-                file_data = []
-                # read file
-                with open(input_file, mode='r') as f:
-                    reader = csv.reader(f, delimiter=',')
-                    line_count = 0
-                    for line in reader:
-                        if line_count > 0:
-                            # cast to float
-                            for i, elem in enumerate(line):
-                                line[i] = float(elem)
-                            file_data.append(((line[0], line[1], line[2]),
-                                             (line[3], line[4], line[5])))
-                        line_count += 1
-                line_count = 0
+                init_out_file(output_file)
         if arg == "--v":
             # Init vpython window
             my_box = init_vpython()
-    if "--v" not in sys.argv:
-        # Init curses window
-        stdscr, str_dict, offset = init_curses()
-        
-    # Start
-    last = time.time()
-    processed_accel = [0, 0, 0]
-    g_vect = [0, 0, 0]
+    # Init curses window
+    stdscr, str_dict, offset = init_curses()
 
+    imu = IMU(sensor)
+    imu.start()
+    time.sleep(0.2)
+    
     while True:
-        # Grab datas:
-        if "--r" in sys.argv:
-            if line_count < len(file_data):
-                data = file_data[line_count]
-            else:
-                if "--v" not in sys.argv:
-                    curses.endwin()
-                break
-            line_count += 1
-        else:
-            data = sensor.read()
-        additional_data = sensor.magneto_read()
-        deltat = time.time() - last
-        last = time.time()
-        # Process datas:
-        processed_accel, a_vect = process_accel(data[0], processed_accel)
-        processed_gyro, g_vect = process_gyro(data[1], a_vect + [0], deltat)
-        # Combine datas and adjust signs:
-        ratio = 0.98
-        g_vect[0] = -1 * (ratio * (g_vect[0]) + (1 - ratio) * a_vect[0])
-        g_vect[1] = ratio * (g_vect[1]) + (1 - ratio) * a_vect[1]
-        g_vect[2] = -1 * g_vect[2]
+        imu_values = imu.values
+        deltat = imu_values["deltat"]
+        processed_accel = imu_values["acc"]
+        g_vect = imu_values["gyro"]
+        temp = imu_values["temp"]
+        heading = imu_values["heading"]
         # Save data
         if "--o" in sys.argv:
-            with open(output_file, mode="a") as f:
-                writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                writer.writerow([str(round(processed_accel[0], 2)),
-                                 str(round(processed_accel[1], 2)),
-                                 str(round(processed_accel[2], 2)),
-                                 str(round(processed_gyro[0], 2)),
-                                 str(round(processed_gyro[1], 2)),
-                                 str(round(processed_gyro[2], 2)),
-                                 str(round(additional_data[2], 2))])
+            write_out_file(output_file, deltat, processed_accel, temp, heading)
         # Update box or print datas:
         if "--v" in sys.argv:
             update_vpython(g_vect, my_box)
-        else:
-            if update_curses(stdscr, str_dict, offset, 
+        if update_curses(stdscr, str_dict, offset, 
                             processed_accel, g_vect,
-                            additional_data):
-                break
-        time.sleep(0.01)
+                            temp, heading):
+            imu.stop = True
+            break  
+        time.sleep(0.1)
     exit(0)
