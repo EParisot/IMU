@@ -9,8 +9,8 @@ Raspberry IMU datas visualiser
 
 ## requirements :
 ```
-python3 
-smbus 
+python3, pip3
+smbus
 Adafruit_GPIO
 vpython(optional)
 ```
