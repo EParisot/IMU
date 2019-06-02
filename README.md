@@ -29,7 +29,7 @@ sudo raspi-config
 
 ## Script usage : 
 ```
-python3 main.py [--v](vpython/OpenGL needed) [--r file.csv] [--o file.csv]
+python3 main.py [--v](vpython/OpenGL needed) [--o file.csv]
 
 --v : vpython 3d box visualisation
 --o : output data to csv file
