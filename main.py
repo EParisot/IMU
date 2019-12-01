@@ -6,6 +6,9 @@ from math import *
 import sys
 import curses
 from vpython import *
+import matplotlib.pyplot as plt
+
+from collections import deque
 import csv
 from threading import Thread
 
@@ -116,6 +119,35 @@ def update_vpython(vect, mybox):
     mybox.axis = axis
     mybox.up = up
 
+def init_plot():
+    plt.ion() ## Note this correction
+    fig=plt.figure()
+    global t
+    t = 0
+    global t_dq
+    t_dq = deque(maxlen=16)
+    global x_dq
+    x_dq = deque(maxlen=16)
+    global y_dq
+    y_dq = deque(maxlen=16)
+    global z_dq
+    z_dq = deque(maxlen=16)
+
+def update_plot(deltat, processed_accel):
+    global t
+    t += deltat
+    t_dq.append(t)
+    x_dq.append(processed_accel[0])
+    y_dq.append(processed_accel[1])
+    z_dq.append(processed_accel[2])
+    plt.clf()
+    plt.plot(t_dq, x_dq, label="Xacc")
+    plt.plot(t_dq, y_dq, label="Yacc")
+    plt.plot(t_dq, z_dq, label="Zacc")
+    plt.legend()
+    plt.show()
+    plt.pause(0.0001)
+
 def init_out_file(output_file):
     with open(output_file, mode="w") as f:
                     writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
@@ -211,6 +243,8 @@ if __name__ == "__main__":
         if arg == "--v":
             # Init vpython window
             my_box = init_vpython()
+        elif arg == "--p":
+            init_plot()
     # Init curses window
     stdscr, str_dict, offset = init_curses()
     # Init IMU object and start Thread
@@ -227,13 +261,15 @@ if __name__ == "__main__":
         # Save data
         if "--o" in sys.argv:
             write_out_file(output_file, deltat, processed_accel, temp, heading)
+        if "--v" in sys.argv:
+            update_vpython(g_vect, my_box)
+        elif "--p" in sys.argv:
+            update_plot(deltat, processed_accel)
         # Update box or print datas:
         if update_curses(stdscr, str_dict, offset, 
                             processed_accel, g_vect,
                             temp, heading):
             break
-        if "--v" in sys.argv:
-            update_vpython(g_vect, my_box)
-        time.sleep(0.1)
+        #time.sleep(0.1)
     imu.stop = True
     exit(0)
