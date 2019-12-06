@@ -13,6 +13,7 @@ python3, pip3
 smbus
 Adafruit_GPIO
 vpython(optional)
+matplotlib
 ```
 
 ## RPi Raspbian : activate I2C interface (mandatory)

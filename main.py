@@ -124,14 +124,15 @@ def init_plot():
     fig=plt.figure()
     global t
     t = 0
+    maxlen = 16
     global t_dq
-    t_dq = deque(maxlen=16)
+    t_dq = deque(maxlen=maxlen)
     global x_dq
-    x_dq = deque(maxlen=16)
+    x_dq = deque(maxlen=maxlen)
     global y_dq
-    y_dq = deque(maxlen=16)
+    y_dq = deque(maxlen=maxlen)
     global z_dq
-    z_dq = deque(maxlen=16)
+    z_dq = deque(maxlen=maxlen)
 
 def update_plot(deltat, processed_accel):
     global t
@@ -231,7 +232,7 @@ if __name__ == "__main__":
     Script
     usage:
     
-    python3 IMU.py [--v] [--o file]
+    python3 IMU.py [--v] [--p] [--o file]
     '''
     # Parse args
     for i, arg in enumerate(sys.argv):
@@ -246,7 +247,8 @@ if __name__ == "__main__":
         elif arg == "--p":
             init_plot()
     # Init curses window
-    stdscr, str_dict, offset = init_curses()
+    if "--v" not in sys.argv and "--p" not in sys.argv:
+        stdscr, str_dict, offset = init_curses()
     # Init IMU object and start Thread
     imu = IMU(sensor)
     imu.start()
@@ -265,8 +267,7 @@ if __name__ == "__main__":
             update_vpython(g_vect, my_box)
         elif "--p" in sys.argv:
             update_plot(deltat, processed_accel)
-        # Update box or print datas:
-        if update_curses(stdscr, str_dict, offset, 
+        elif update_curses(stdscr, str_dict, offset, 
                             processed_accel, g_vect,
                             temp, heading):
             break
